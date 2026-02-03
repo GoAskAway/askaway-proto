@@ -1,10 +1,10 @@
 syntax = "proto3";
-package ask_service;
+package answerer;
 
 // 服务定义
-service AskService {
+service AnswererService {
   // 提交问题并获取回答
-  rpc UsrPrompt(UsrPromptRequest) returns (AssistantReply);
+  rpc Prompt(UsrPromptRequest) returns (AssistantReply);
   // Uploads an attachment
   rpc Attach(AttachRequest) returns (AttachResponse);
   // 注销 dataStream
