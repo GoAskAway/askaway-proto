@@ -25,9 +25,8 @@ message AssistantReply {
   string question_id = 1; // ID for the answer stream
   string session_id = 2; // Session ID for tracking
   string text = 3; // Text answer (if applicable)
-  string stream_id = 4; // Stream ID for the answer
-  int32 status_code = 5;
-  string error_message = 6;
+  int32 status_code = 4;
+  string error_message = 5;
 }
 
 // Predefined attachment types
