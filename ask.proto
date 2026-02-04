@@ -1,24 +1,24 @@
 syntax = "proto3";
-package answerer;
+package ask;
 
-// 服务定义
-service AnswererService {
-  // 提交问题并获取回答
+// Service definition
+service AskService {
+  // Submit a prompt and get a reply
   rpc Prompt(UsrPromptRequest) returns (AssistantReply);
-  // Uploads an attachment
+  // Upload an attachment
   rpc Attach(AttachRequest) returns (AttachResponse);
 }
 
-// 问题和答案消息定义
+// Prompt and reply message definitions
 message UsrPromptRequest {
   string question_id = 1; // Unique question identifier
   string session_id = 2; // Session ID for tracking
   string text = 3; // Text question (if applicable)
   string voice_stream_id = 4; // Voice question stream ID (if applicable)
   Location location = 5; // Optional location context
-  repeated string attachment_ids = 6; // Optional: Attachment IDs
-  string text_response_stream_id = 7; // Voice question stream ID (if applicable)
-  string voice_response_stream_id = 8; // Voice question stream ID (if applicable)
+  repeated string attachment_ids = 6; // Optional attachment IDs
+  string text_response_stream_id = 7; // Text response stream ID (if applicable)
+  string voice_response_stream_id = 8; // Voice response stream ID (if applicable)
 }
 
 message AssistantReply {
@@ -30,7 +30,7 @@ message AssistantReply {
   string error_message = 6;
 }
 
-// 预定义的附件类型
+// Predefined attachment types
 enum AttachmentType {
   ATTACHMENT_TYPE_UNKNOWN = 0;
   IMAGE = 1;
@@ -39,19 +39,19 @@ enum AttachmentType {
   VIDEO = 4;
   OTHER = 99;
 }
-// 附件上传请求
+// Attachment upload request
 message AttachRequest {
-  string id = 1; // 附件唯一标识
-  string filename = 2; // 原始文件名
-  AttachmentType type = 3; // 附件类型
-  bytes data = 4; // 文件原始字节数据
+  string id = 1; // Attachment unique identifier
+  string filename = 2; // Original filename
+  AttachmentType type = 3; // Attachment type
+  bytes data = 4; // Raw file bytes
 }
 
-// 附件上传响应
+// Attachment upload response
 message AttachResponse {
-  string id = 1; // 附件 ID（与请求中的 id 对应）
-  int32 status_code = 2; // 状态码（0 表示成功）
-  string error_message = 3; // 错误信息（如果有）
+  string id = 1; // Attachment ID (matches request id)
+  int32 status_code = 2; // Status code (0 means success)
+  string error_message = 3; // Error message (if any)
 }
 
 // Shared location type
