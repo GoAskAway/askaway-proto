@@ -7,8 +7,6 @@ service AnswererService {
   rpc Prompt(UsrPromptRequest) returns (AssistantReply);
   // Uploads an attachment
   rpc Attach(AttachRequest) returns (AttachResponse);
-  // 注销 dataStream
-  rpc UnregisterDataStream(UnregisterRequest) returns (UnregisterResponse);
 }
 
 // 问题和答案消息定义
@@ -19,6 +17,8 @@ message UsrPromptRequest {
   string voice_stream_id = 4; // Voice question stream ID (if applicable)
   Location location = 5; // Optional location context
   repeated string attachment_ids = 6; // Optional: Attachment IDs
+  string text_response_stream_id = 7; // Voice question stream ID (if applicable)
+  string voice_response_stream_id = 8; // Voice question stream ID (if applicable)
 }
 
 message AssistantReply {
@@ -60,13 +60,4 @@ message Location {
   double longitude = 2; // Longitude
   string address = 3; // Optional: Address description
   string place_name = 4; // Optional: Place name
-}
-
-message UnregisterRequest {
-  string stream_id = 1;
-}
-
-message UnregisterResponse {
-  bool success = 1;
-  string message = 2;
 }
