@@ -19,7 +19,7 @@ askaway-proto/
 | RPC | 请求 | 响应 | 说明 |
 | --- | --- | --- | --- |
 | `Prompt` | `UsrPromptRequest` | `AssistantReply` | 文本/语音 QA |
-| `Attach` | `AttachRequest` | `AttachResponse` | 附件上传 |
+| `PrepareAttachmentUpload` | `PrepareAttachmentUploadRequest` | `PrepareAttachmentUploadResponse` | 准备附件上传流，最终结果通过 `result_stream_id` 回传 |
 
 **AskLocalService** (`client-service/`): 本地网关，接收 Shell 请求转发到 AskService。
 

@@ -39,19 +39,38 @@ enum AttachmentType {
   OTHER = 99;
 }
 
-// 附件上传请求
-message AttachRequest {
+// 附件上传最终状态
+enum AttachmentUploadStatus {
+  ATTACHMENT_UPLOAD_STATUS_UNKNOWN = 0;
+  COMPLETED = 1;
+  FAILED = 2;
+}
+
+// 附件上传准备请求
+message PrepareAttachmentUploadRequest {
   string id = 1;                   // 附件唯一标识
   string filename = 2;             // 原始文件名
   AttachmentType type = 3;         // 附件类型
-  bytes data = 4;                  // 文件原始字节数据
+  string stream_id = 4;            // 附件内容使用该 DataStream 传输
+  string checksum = 5;             // 原始文件字节的校验值
+  string checksum_algorithm = 6;   // 例如 "md5" 或 "sha256"
+  uint64 size_bytes = 7;           // 原始文件字节数
+  string result_stream_id = 8;     // 客户端预先注册的上传结果流
 }
 
-// 附件上传响应
-message AttachResponse {
+// 附件上传准备响应
+message PrepareAttachmentUploadResponse {
   string id = 1;                   // 附件 ID（与请求中的 id 对应）
-  int32 status_code = 2;           // 状态码（0 表示成功）
+  int32 status_code = 2;           // 状态码（0 表示 stream handler 已注册）
   string error_message = 3;        // 错误信息（如果有）
+}
+
+// 附件上传最终结果，通过 result_stream_id 发送
+message AttachmentUploadResult {
+  string id = 1;                   // 附件 ID（与请求中的 id 对应）
+  AttachmentUploadStatus status = 2; // 最终上传状态
+  int32 status_code = 3;           // 状态码（0 表示已完成）
+  string error_message = 4;        // 错误信息（如果有）
 }
 
 // Shared location type
@@ -101,8 +120,8 @@ message VoiceResponse {
 }
 
 service AskService {
-  // Uploads an attachment
-  rpc Attach(AttachRequest) returns (AttachResponse);
+  // Prepares an attachment upload stream
+  rpc PrepareAttachmentUpload(PrepareAttachmentUploadRequest) returns (PrepareAttachmentUploadResponse);
 
   // Handles text questions and returns a stream ID for the answer
   rpc Text(TextRequest) returns (TextResponse);
@@ -172,13 +191,13 @@ service AskLocalService {
 
 | 方法 | 请求 | 响应 | 说明 |
 | --- | --- | --- | --- |
-| `Attach` | `AttachRequest` | `AttachResponse` | 上传附件 |
+| `PrepareAttachmentUpload` | `PrepareAttachmentUploadRequest` | `PrepareAttachmentUploadResponse` | 准备附件上传流 |
 | `Text` | `TextRequest` | `TextResponse` | 文本查询逻辑 |
 | `Voice` | `VoiceRequest` | `VoiceResponse` | 语音查询逻辑 |
 
 **关键行为**：
 
-* **附件上传**：接收附件数据，返回附件 ID，供后续请求引用。
+* **附件上传准备**：注册附件 `stream_id` 的 DataStream handler，返回 ready 响应；附件内容通过后续 DataStream 分片传输，并在 EOS 后校验大小和 checksum，最终结果通过客户端预注册的 `result_stream_id` 回传，payload 为 protobuf 编码的 `AttachmentUploadResult`。
 * **流式发送**：使用 `ctx.send_data_stream(target, chunk)` 按增量将数据回推给调用方。
 * **上下文感知**：利用请求中的 `Location` 信息。
 
