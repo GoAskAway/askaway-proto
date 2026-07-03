@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package client;
+
+// AskLocalService is the local actor that fronts the Shell/UI. Besides forwarding
+// Shell requests to the remote AskService, it exposes capabilities that AskService
+// reverse-calls while handling an in-flight request.
+service AskLocalService {
+  // Raise a structured question to the user while AskService is handling a prompt.
+  // Blocks until the user answers or cancels.
+  rpc AskUserQuestion(AskUserQuestionRequest) returns (AskUserQuestionResponse);
+}
+
+message AskUserQuestionRequest {
+  string ask_id = 1; // Unique id for this ask
+  string session_id = 2; // Session ID, for routing to the right session
+  string prompt_question_id = 3; // question_id of the in-flight prompt that triggered this ask (optional)
+  repeated Question questions = 4; // Questions to ask
+}
+
+message Question {
+  string header = 1; // Short chip-style label
+  string question = 2; // Full question text
+  bool multi_select = 3; // Allow selecting multiple options
+  repeated QuestionOption options = 4; // Predefined options
+}
+
+message QuestionOption {
+  string label = 1; // Option display text
+  string description = 2; // Optional: option explanation
+}
+
+message AskUserQuestionResponse {
+  string ask_id = 1; // Matches request ask_id
+  bool cancelled = 2; // true if the user dismissed without answering
+  repeated QuestionAnswer answers = 3; // One per answered question
+}
+
+message QuestionAnswer {
+  uint32 question_index = 1; // Index into the questions list
+  repeated uint32 selected_options = 2; // Selected option indices (multiple when multi_select)
+  string custom_text = 3; // Free-text "Other" answer, if any
+}

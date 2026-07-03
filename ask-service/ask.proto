@@ -7,6 +7,10 @@ service AskService {
   rpc Prompt(UsrPromptRequest) returns (AssistantReply);
   // Prepare an attachment upload stream
   rpc PrepareAttachmentUpload(PrepareAttachmentUploadRequest) returns (PrepareAttachmentUploadResponse);
+  // Continue response streams from client-reported cursors.
+  rpc ContinuePromptResultStreams(ContinuePromptResultStreamsRequest) returns (ContinuePromptResultStreamsResponse);
+  // Cancel a prompt and release server-side result state.
+  rpc CancelPrompt(CancelPromptRequest) returns (CancelPromptResponse);
 }
 
 // Prompt and reply message definitions
@@ -19,14 +23,59 @@ message UsrPromptRequest {
   repeated string attachment_ids = 6; // Optional attachment IDs
   string text_response_stream_id = 7; // Text response stream ID (if applicable)
   string voice_response_stream_id = 8; // Voice response stream ID (if applicable)
+  string device_installation_id = 9; // Stable app installation ID for push notification routing
+}
+
+enum PromptReplyStatus {
+  PROMPT_REPLY_STATUS_UNKNOWN = 0;
+  PROMPT_REPLY_IMMEDIATE_RESULT = 1; // Result is already included in AssistantReply.text
+  PROMPT_REPLY_PROCESSING_STREAM = 2; // Result will be returned through response streams
+  PROMPT_REPLY_EXCEPTION = 3; // Prompt failed; exception_message is populated
 }
 
 message AssistantReply {
   string question_id = 1; // ID for the answer stream
   string session_id = 2; // Session ID for tracking
-  string text = 3; // Text answer (if applicable)
-  int32 status_code = 4;
-  string error_message = 5;
+  string text = 3; // Complete text result only when status is PROMPT_REPLY_IMMEDIATE_RESULT
+  PromptReplyStatus status = 4;
+  string exception_message = 5;
+}
+
+message ContinuePromptResultStreamsRequest {
+  string question_id = 1;
+  string session_id = 2;
+  repeated StreamPayloadCursor streams = 3;
+}
+
+message StreamPayloadCursor {
+  string stream_id = 1;
+  uint64 next_payload_id = 2; // Next payload ID the client expects on this stream, initially 0
+}
+
+message ContinuePromptResultStreamsResponse {
+  string question_id = 1;
+  string session_id = 2;
+  string exception_message = 3;
+}
+
+message CancelPromptRequest {
+  string question_id = 1;
+  string session_id = 2;
+}
+
+message CancelPromptResponse {
+  string question_id = 1;
+  string session_id = 2;
+  string exception_message = 3;
+}
+
+message PromptResponseStreamPayload {
+  string protocol = 1; // "prompt-result.v1"
+  string question_id = 2;
+  string session_id = 3;
+  uint64 payload_id = 4; // Same as DataStream.sequence within the same stream
+  bool eos = 5; // true means this response stream is finished
+  bytes payload = 6; // Askaway upper-layer encoded payload bytes
 }
 
 // Predefined attachment types
