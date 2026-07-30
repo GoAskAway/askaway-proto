@@ -7,8 +7,9 @@ package client;
 // reverse-calls while handling an in-flight request.
 service AskLocalService {
   // Raise a structured question to the user while AskService is handling a prompt.
-  // Blocks until the user answers or cancels.
-  rpc AskUserQuestion(AskUserQuestionRequest) returns (AskUserQuestionResponse);
+  // Returns immediately after delivering the question; the answer is submitted back
+  // via AskService.SubmitUserQuestionAnswer, so the caller does not block on this RPC.
+  rpc AskUserQuestion(AskUserQuestionRequest) returns (AskUserQuestionAck);
 }
 
 message AskUserQuestionRequest {
@@ -30,14 +31,6 @@ message QuestionOption {
   string description = 2; // Optional: option explanation
 }
 
-message AskUserQuestionResponse {
-  string ask_id = 1; // Matches request ask_id
-  bool cancelled = 2; // true if the user dismissed without answering
-  repeated QuestionAnswer answers = 3; // One per answered question
-}
-
-message QuestionAnswer {
-  uint32 question_index = 1; // Index into the questions list
-  repeated uint32 selected_options = 2; // Selected option indices (multiple when multi_select)
-  string custom_text = 3; // Free-text "Other" answer, if any
+message AskUserQuestionAck {
+  string ask_id = 1; // Confirms the question was received
 }

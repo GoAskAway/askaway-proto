@@ -11,6 +11,9 @@ service AskService {
   rpc ContinuePromptResultStreams(ContinuePromptResultStreamsRequest) returns (ContinuePromptResultStreamsResponse);
   // Cancel a prompt and release server-side result state.
   rpc CancelPrompt(CancelPromptRequest) returns (CancelPromptResponse);
+  // Submit the answer to an AskLocalService.AskUserQuestion previously raised by the
+  // server while handling a prompt. Wakes the suspended server-side process by ask_id.
+  rpc SubmitUserQuestionAnswer(AskUserQuestionAnswer) returns (SubmitUserQuestionAnswerAck);
 }
 
 // Prompt and reply message definitions
@@ -128,4 +131,21 @@ message Location {
   double longitude = 2; // Longitude
   string address = 3; // Optional: Address description
   string place_name = 4; // Optional: Place name
+}
+
+// Answer submitted by the client for an AskUserQuestion raised by the server.
+message AskUserQuestionAnswer {
+  string ask_id = 1; // Matches the ask_id from AskUserQuestionRequest
+  bool cancelled = 2; // true if the user dismissed without answering
+  repeated QuestionAnswer answers = 3; // One per answered question
+}
+
+message QuestionAnswer {
+  uint32 question_index = 1; // Index into the questions list
+  repeated uint32 selected_options = 2; // Selected option indices (multiple when multi_select)
+  string custom_text = 3; // Free-text "Other" answer, if any
+}
+
+message SubmitUserQuestionAnswerAck {
+  bool accepted = 1; // true if ask_id matched and was still pending; false if unknown/expired/already answered
 }
